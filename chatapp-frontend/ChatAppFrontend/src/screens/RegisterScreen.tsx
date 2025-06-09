@@ -1,37 +1,31 @@
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { TextInput } from 'react-native-gesture-handler';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-
 import authStore from '../stores/authStore';
+import { TextInput } from 'react-native-gesture-handler';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type RootStackParamList = {
     Login: undefined;
     Chat: undefined;
-    Register: undefined;
-};
+}
 
-const LoginScreen = observer(() => {
+const RegisterScreen = observer(() => {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
 
-    const handleLogin = () => {
-        authStore.login(username, password);
-    };
-
-    useEffect(() => {
+    const handleRegister = async () => {
+        await authStore.register(username, password);
         if (authStore.isLoggedIn) {
-            navigation.replace('Chat');
+            navigation.navigate('Chat');
         }
-    }, [authStore.isLoggedIn]);
+    };
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Log in</Text>
+            <Text style={styles.title}>Register</Text>
 
             <TextInput
                 style={styles.input}
@@ -48,26 +42,27 @@ const LoginScreen = observer(() => {
                 secureTextEntry
             />
 
-            {authStore.isLoading ? (
-                <ActivityIndicator size='small' color='#000' />
-            ) : (
-                <TouchableOpacity style={styles.button} onPress={handleLogin}>
-                    <Text style={styles.buttonText}>Log in</Text>
-                </TouchableOpacity>
+            {authStore.error !== '' && (
+                <Text style={styles.errorText}>{authStore.error}</Text>
             )}
 
-            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                <Text style={styles.registerText}>
-                    Don't have an account? Sign Up
-                </Text>
+            <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={authStore.isLoading}>
+                {authStore.isLoading ? (
+                    <ActivityIndicator color='#fff' />
+                ) : (
+                    <Text style={styles.buttonText}>Register</Text>
+                )}
             </TouchableOpacity>
 
-            {authStore.error ? <Text style={styles.error}>{authStore.error}</Text> : null}
+            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                <Text style={styles.link}>Already have an account? Log in</Text>
+            </TouchableOpacity>
         </View>
     )
 })
 
-export default LoginScreen;
+
+export default RegisterScreen;
 
 const styles = StyleSheet.create({
     container: {
@@ -89,6 +84,11 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         borderRadius: 6,
     },
+    errorText: {
+        color: 'red',
+        marginBottom: 10,
+        textAlign: 'center',
+    },
     button: {
         backgroundColor: '#4CAF50',
         padding: 12,
@@ -99,14 +99,9 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         fontWeight: 'bold',
     },
-    error: {
-        color: 'red',
+    link: {
+        color: '#1E90FF',
+        textAlign: 'center',
         marginTop: 10,
-        textAlign: 'center',
-    },
-    registerText: {
-        marginTop: 16,
-        textAlign: 'center',
-        color: '#3b82f6',
-    },
+    }
 });

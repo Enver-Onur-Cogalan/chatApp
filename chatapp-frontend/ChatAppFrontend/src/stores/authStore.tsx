@@ -38,6 +38,29 @@ class AuthStore {
         }
     }
 
+    async register(username: string, password: string) {
+        this.isLoading = true;
+        this.error = '';
+
+        try {
+            const res = await axios.post('http://10.0.2.2:5001/api/auth/register', {
+                username,
+                password,
+            });
+
+            runInAction(() => {
+                this.token = res.data.token;
+                this.username = res.data.username;
+                this.isLoading = false;
+            });
+        } catch (err: any) {
+            runInAction(() => {
+                this.error = err?.response?.data?.message || 'Bir hata oluştu';
+                this.isLoading = false;
+            });
+        }
+    }
+
     logout() {
         this.token = '';
         this.username = '';
