@@ -58,7 +58,7 @@ const LoginScreen = observer(() => {
 
             <TouchableOpacity onPress={() => navigation.navigate('Register')}>
                 <Text style={styles.registerText}>
-                    Don't have an account? Sign Up
+                    Don't have an account? Register
                 </Text>
             </TouchableOpacity>
 

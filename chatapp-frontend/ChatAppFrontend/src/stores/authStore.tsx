@@ -1,5 +1,6 @@
 import { makeAutoObservable, runInAction } from "mobx";
 import axios from "axios";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 class AuthStore {
     username: string = '';
@@ -15,6 +16,23 @@ class AuthStore {
         this.username = username;
     }
 
+    // OtoLogin
+    async loadUserFromStorage() {
+        try {
+            const storedToken = await AsyncStorage.getItem('token');
+            const storedUsername = await AsyncStorage.getItem('username');
+
+            if (storedToken && storedUsername) {
+                runInAction(() => {
+                    this.token = storedToken;
+                    this.username = storedUsername;
+                });
+            }
+        } catch (err) {
+            console.log('Kullanıcı bilgileri yüklenemedi:', err);
+        }
+    }
+
     async login(username: string, password: string) {
         this.isLoading = true;
         this.error = '';
@@ -24,6 +42,9 @@ class AuthStore {
                 username,
                 password,
             });
+
+            await AsyncStorage.setItem('token', res.data.token);
+            await AsyncStorage.setItem('username', res.data.username);
 
             runInAction(() => {
                 this.token = res.data.token;
@@ -48,6 +69,9 @@ class AuthStore {
                 password,
             });
 
+            await AsyncStorage.setItem('token', res.data.token);
+            await AsyncStorage.setItem('username', res.data.username);
+
             runInAction(() => {
                 this.token = res.data.token;
                 this.username = res.data.username;
@@ -61,9 +85,12 @@ class AuthStore {
         }
     }
 
-    logout() {
+    async logout() {
         this.token = '';
         this.username = '';
+
+        await AsyncStorage.removeItem('token');
+        await AsyncStorage.removeItem('username');
     }
 
     get isLoggedIn() {
