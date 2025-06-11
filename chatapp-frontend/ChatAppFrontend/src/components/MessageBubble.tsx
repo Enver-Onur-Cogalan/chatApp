@@ -5,9 +5,17 @@ interface MessageBubbleProps {
     message: string;
     isOwnMessage: boolean;
     sender: string;
+    timestamp: string;
 }
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwnMessage, sender }) => {
+const formatTime = (iso: string) => {
+    const d = new Date(iso);
+    return isNaN(d.getTime())
+        ? ''
+        : d.toLocaleDateString([], { hour: '2-digit', minute: '2-digit' });
+};
+
+const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwnMessage, sender, timestamp }) => {
     return (
         <View
             style={[
@@ -17,6 +25,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwnMessage, se
         >
             {!isOwnMessage && <Text style={styles.sender}>{sender}</Text>}
             <Text style={styles.message}>{message}</Text>
+            <Text style={styles.timeText}>{formatTime(timestamp)}</Text>
         </View>
     );
 };
@@ -45,7 +54,12 @@ const styles = StyleSheet.create({
     message: {
         fontSize: 16,
     },
-
+    timeText: {
+        fontSize: 10,
+        color: '#444',
+        alignSelf: 'flex-end',
+        marginTop: 4,
+    },
 });
 
 export default MessageBubble;

@@ -35,6 +35,7 @@ const ChatMessage: React.FC<Props> = ({ msg, onDelete }) => {
                     message={msg.text}
                     sender={msg.sender}
                     isOwnMessage={msg.sender === authStore.username}
+                    timestamp={msg.timestamp}
                 />
             </TouchableOpacity>
         </View>

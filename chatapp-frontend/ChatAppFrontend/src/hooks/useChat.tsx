@@ -8,7 +8,7 @@ import { Platform } from "react-native";
 const host = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
 const socket = socketIO(`http://${host}:5001`, { transports: ['websocket'] });
 
-export interface ChatMsg { id: string; text: string; sender: string; }
+export interface ChatMsg { id: string; text: string; sender: string; timestamp: string; }
 
 export function useChat() {
     const [messages, setMessages] = useState<ChatMsg[]>([]);
@@ -34,10 +34,12 @@ export function useChat() {
     }, []);
 
     const send = async (text: string, receiver: 'all') => {
+        const now = new Date().toISOString();
         const msg: ChatMsg = {
             id: Math.random().toString(),
             text,
             sender: authStore.username,
+            timestamp: now,
         };
         socket.emit('sendMessage', { ...msg, receiver });
         setMessages(prev => {
