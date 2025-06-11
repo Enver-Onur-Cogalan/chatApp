@@ -16,6 +16,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import socket from '../utils/socket';
 import MessageBubble from '../components/MessageBubble';
 import authStore from '../stores/authStore';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type RootStackParamList = {
     Login: undefined;
@@ -66,45 +67,47 @@ export default function ChatScreen() {
 
 
     return (
-        <KeyboardAvoidingView
-            style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            keyboardVerticalOffset={90}
-        >
-            <View style={styles.header}>
-                <Text style={styles.headerTitle}>ChatApp</Text>
-                <TouchableOpacity onPress={handleLogout}>
-                    <Icon name='log-out-outline' size={24} color='#333' />
-                </TouchableOpacity>
-            </View>
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['bottom', 'top']}>
+            <KeyboardAvoidingView
+                style={styles.container}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                keyboardVerticalOffset={90}
+            >
+                <View style={styles.header}>
+                    <Text style={styles.headerTitle}>ChatApp</Text>
+                    <TouchableOpacity onPress={handleLogout}>
+                        <Icon name='log-out-outline' size={24} color='#333' />
+                    </TouchableOpacity>
+                </View>
 
-            <FlatList
-                ref={flatListRef}
-                data={messages}
-                keyExtractor={(_, index) => index.toString()}
-                renderItem={({ item }) => (
-                    <MessageBubble
-                        message={item.text}
-                        sender={item.sender}
-                        isOwnMessage={item.sender === authStore.username}
-                    />
-                )}
-                contentContainerStyle={styles.chatContainer}
-                onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-            />
-
-            <View style={styles.inputContainer}>
-                <TextInput
-                    style={styles.input}
-                    placeholder='Write your message...'
-                    value={input}
-                    onChangeText={setInput}
+                <FlatList
+                    ref={flatListRef}
+                    data={messages}
+                    keyExtractor={(_, index) => index.toString()}
+                    renderItem={({ item }) => (
+                        <MessageBubble
+                            message={item.text}
+                            sender={item.sender}
+                            isOwnMessage={item.sender === authStore.username}
+                        />
+                    )}
+                    contentContainerStyle={styles.chatContainer}
+                    onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
                 />
-                <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
-                    <Text style={styles.sendText}>Send</Text>
-                </TouchableOpacity>
-            </View>
-        </KeyboardAvoidingView>
+
+                <View style={styles.inputContainer}>
+                    <TextInput
+                        style={styles.input}
+                        placeholder='Write your message...'
+                        value={input}
+                        onChangeText={setInput}
+                    />
+                    <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
+                        <Text style={styles.sendText}>Send</Text>
+                    </TouchableOpacity>
+                </View>
+            </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 }
 
@@ -133,6 +136,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderRadius: 20,
         paddingHorizontal: 15,
+        paddingVertical: Platform.OS === 'ios' ? 10 : 15,
         backgroundColor: '#f1f1f1'
     },
     chatContainer: {
