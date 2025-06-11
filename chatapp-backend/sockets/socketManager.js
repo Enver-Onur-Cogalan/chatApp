@@ -1,4 +1,6 @@
-const users = new Map(); // username: socketId eşleşmesi 
+const users = new Map();
+const Message = require('../models/Message');
+
 
 const handleSocketConnection = (io, socket) => {
     console.log('🟢 Yeni bağlantı:', socket.id);
@@ -10,14 +12,28 @@ const handleSocketConnection = (io, socket) => {
     });
 
     // Mesajın alıcıya iletlimesi
-    socket.on('sendMessage', ({ sender, reciever, content }) => {
-        const receiverSocketId = users.get(reciever);
-        if (receiverSocketId) {
-            io.to(receiverSocketId).emit('receiveMessage', {
-                sender,
-                content,
-                timestamps: new Date(),
-            });
+    socket.on('sendMessage', async (data) => {
+        console.log('🟢 [CLIENT] receiveMessage alındı:', data);
+
+
+        const sender = data.sender;
+        const content = data.content ?? data.text;
+        const receiver = data.receiver || 'all';
+
+        console.log('🟢 [SERVER] sendMessage:', { sender, receiver, content });
+
+        try {
+            await Message.create({ sender, receiver, content });
+            console.log('💾 Mesaj DB’ye kaydedildi');
+        } catch (e) {
+            console.error("❌ DB'ye kaydetme hatası:", e)
+        }
+
+        if (receiver === 'all') {
+            socket.broadcast.emit('receiveMessage', { text: content, sender });
+        } else {
+            const id = users.get(receiver);
+            if (id) io.to(id).emit('receiveMessage', { text: content, sender });
         }
     });
 

@@ -1,6 +1,10 @@
 import { makeAutoObservable, runInAction } from "mobx";
 import axios from "axios";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from "react-native";
+
+const HOST = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
+const BASE_URL = `http://${HOST}:5001/api/auth`;
 
 class AuthStore {
     username: string = '';
@@ -15,6 +19,7 @@ class AuthStore {
     setUsername(username: string) {
         this.username = username;
     }
+
 
     // OtoLogin
     async loadUserFromStorage() {
@@ -38,7 +43,7 @@ class AuthStore {
         this.error = '';
 
         try {
-            const res = await axios.post('http://10.0.2.2:5001/api/auth/login', {
+            const res = await axios.post(`${BASE_URL}/login`, {
                 username,
                 password,
             });
@@ -64,7 +69,7 @@ class AuthStore {
         this.error = '';
 
         try {
-            const res = await axios.post('http://10.0.2.2:5001/api/auth/register', {
+            const res = await axios.post(`${BASE_URL}/register`, {
                 username,
                 password,
             });

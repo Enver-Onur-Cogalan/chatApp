@@ -7,7 +7,7 @@ const messageSchema = new mongoose.Schema({
     },
     receiver: {
         type: String,
-        required: true,
+        default: 'all',
     },
     content: {
         type: String,

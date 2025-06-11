@@ -6,20 +6,16 @@ const Message = require('../models/Message');
 // Mesaj Gönderme
 router.post('/send', verifyToken, async (req, res) => {
     const { receiver, content } = req.body;
+    const sender = req.user.username;
 
     try {
-        const newMessage = new Message({
-            sender: req.user.username,
-            receiver,
-            content,
-        });
+        const msg = await Message.create({ sender, receiver, content });
 
-        await newMessage.save();
-
-        res.status(201).json({ message: 'Mesaj gönderildi.' });
-    } catch (error) {
-        console.error('Mesaj gönderme hatası:', error);
-        res.status(500).json({ message: 'Mesaj gönderilemedi', error: error.message });
+        io.emit('receiveMessage', { text: content, sender });
+        res.status(201).json(msg);
+    } catch (err) {
+        console.error('❌ Mesaj gönderme hatası:', err);
+        res.status(500).json({ message: 'Mesaj gönderilemedi', error: err.message });
     }
 });
 

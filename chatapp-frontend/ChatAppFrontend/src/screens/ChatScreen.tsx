@@ -56,6 +56,7 @@ export default function ChatScreen() {
         const newMsg = {
             text: input,
             sender: authStore.username,
+            receiver: 'all',
         };
 
         socket.emit('sendMessage', newMsg);

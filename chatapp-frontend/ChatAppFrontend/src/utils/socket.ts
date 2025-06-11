@@ -1,6 +1,11 @@
+import { Platform } from "react-native";
 import { io } from "socket.io-client";
 
-const socket = io('http://10.0.2.2:5001', {
+const HOST = Platform.OS === 'android'
+    ? '10.0.2.2'
+    : 'localhost';
+
+const socket = io(`http://${HOST}:5001`, {
     transports: ['websocket'],
 });
 
