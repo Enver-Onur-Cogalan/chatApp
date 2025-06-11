@@ -17,6 +17,7 @@ import socket from '../utils/socket';
 import MessageBubble from '../components/MessageBubble';
 import authStore from '../stores/authStore';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { loadMessages, saveMessages } from '../services/chatStorageService';
 
 type RootStackParamList = {
     Login: undefined;
@@ -42,12 +43,22 @@ export default function ChatScreen() {
     };
 
     useEffect(() => {
-        socket.on('receiveMessage', (data: { text: string; sender: string }) => {
-            setMessages((prev) => [...prev, data]);
-        });
+        (async () => {
+            const stored = await loadMessages();
+            setMessages(stored);
+        })();
 
+        const handleReceive = (data: { text: string; sender: string }) => {
+            setMessages(prev => {
+                const updated = [...prev, data];
+                saveMessages(updated);
+                return updated;
+            });
+        };
+
+        socket.on('receiveMessage', handleReceive);
         return () => {
-            socket.off('receiveMessage');
+            socket.off('receiveMessage', handleReceive);
         };
     }, []);
 
