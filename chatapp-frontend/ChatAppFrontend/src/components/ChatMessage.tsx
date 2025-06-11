@@ -1,15 +1,31 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
-import { ChatMsg } from '../hooks/useChat'
+import { ChatMsg } from '../hooks/useChat';
 import MessageBubble from './MessageBubble';
 import authStore from '../stores/authStore';
+import socket from '../utils/socket';
 
-interface Props { msg: ChatMsg; onDelete(id: string): void; }
+interface Props { msg: ChatMsg; onDelete(id: string): void; readSet: React.MutableRefObject<Set<string>>; }
 
-const ChatMessage: React.FC<Props> = ({ msg, onDelete }) => {
+const ChatMessage: React.FC<Props> = ({ msg, onDelete, readSet }) => {
     const [showDelete, setShowDelete] = useState(false);
+
+    useEffect(() => {
+        if (
+            msg.sender !== authStore.username &&
+            msg.status === 'sent' &&
+            !readSet.current.has(msg.id)
+        ) {
+            readSet.current.add(msg.id);
+            // console.log('🔔 [MSG] emit readMessage for:', msg.id);
+            socket.emit('readMessage', {
+                messageId: msg.id,
+                reader: authStore.username,
+            });
+        }
+    }, []);
 
 
     return (
@@ -36,6 +52,7 @@ const ChatMessage: React.FC<Props> = ({ msg, onDelete }) => {
                     sender={msg.sender}
                     isOwnMessage={msg.sender === authStore.username}
                     timestamp={msg.timestamp}
+                    status={msg.status}
                 />
             </TouchableOpacity>
         </View>

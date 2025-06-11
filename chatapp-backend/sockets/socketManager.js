@@ -30,7 +30,10 @@ const handleSocketConnection = (io, socket) => {
                 text: msgDoc.content,
                 sender: msgDoc.sender,
                 timestamp: msgDoc.timestamp.toISOString(),
+                status: msgDoc.status,
             };
+
+            socket.emit('receiveMessage', payload);
 
             if (receiver === 'all') {
                 socket.broadcast.emit('receiveMessage', payload);
@@ -42,6 +45,28 @@ const handleSocketConnection = (io, socket) => {
             console.error("❌ DB'ye kaydetme hatası:", e)
         }
 
+    });
+
+    // Mesajın okunması
+    socket.on('readMessage', async ({ messageId, reader }) => {
+        console.log("🟢 [SERVER] readMessage alındı:", { messageId, reader });
+        try {
+            const msg = await Message.findByIdAndUpdate(
+                messageId,
+                { status: 'read' },
+                { new: true }
+            );
+
+            const senderSocket = users.get(msg.sender);
+            if (senderSocket) {
+                io.to(senderSocket).emit('messageRead', {
+                    id: msg._id.toString(),
+                    reader,
+                });
+            }
+        } catch (err) {
+            console.error('❌ ReadReceipt error:', err);
+        }
     });
 
     socket.on('disconnect', () => {

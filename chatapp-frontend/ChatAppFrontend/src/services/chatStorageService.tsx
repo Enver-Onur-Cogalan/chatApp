@@ -1,8 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ChatMsg } from "../hooks/useChat";
 
 const KEY = 'chatMessages';
 
-export async function saveMessages(messages: { text: string; sender: string }[]) {
+export async function saveMessages(messages: ChatMsg[]) {
     try {
         await AsyncStorage.setItem(KEY, JSON.stringify(messages));
     } catch (e) {
@@ -10,7 +11,7 @@ export async function saveMessages(messages: { text: string; sender: string }[])
     }
 }
 
-export async function loadMessages(): Promise<{ text: string; sender: string }[]> {
+export async function loadMessages(): Promise<ChatMsg[]> {
     try {
         const json = await AsyncStorage.getItem(KEY);
         if (!json) return [];

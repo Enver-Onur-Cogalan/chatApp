@@ -16,7 +16,12 @@ const messageSchema = new mongoose.Schema({
     timestamp: {
         type: Date,
         default: Date.now
-    }
+    },
+    status: {
+        type: String,
+        enum: ['sent', 'read'],
+        default: 'sent',
+    },
 });
 
 module.exports = mongoose.model('Message', messageSchema);

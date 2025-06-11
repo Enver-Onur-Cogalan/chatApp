@@ -1,11 +1,13 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import Icon from "react-native-vector-icons/Ionicons";
 
 interface MessageBubbleProps {
     message: string;
     isOwnMessage: boolean;
     sender: string;
     timestamp: string;
+    status: 'sent' | 'read';
 }
 
 const formatTime = (iso: string) => {
@@ -15,7 +17,14 @@ const formatTime = (iso: string) => {
         : d.toLocaleDateString([], { hour: '2-digit', minute: '2-digit' });
 };
 
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwnMessage, sender, timestamp }) => {
+const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwnMessage, sender, timestamp, status = 'sent' }) => {
+
+    // console.log("🧐 [UI] MessageBubble", {
+    //     id: sender + "|" + timestamp,
+    //     isOwnMessage,
+    //     status,
+    //     message,
+    // });
     return (
         <View
             style={[
@@ -26,6 +35,14 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwnMessage, se
             {!isOwnMessage && <Text style={styles.sender}>{sender}</Text>}
             <Text style={styles.message}>{message}</Text>
             <Text style={styles.timeText}>{formatTime(timestamp)}</Text>
+            {isOwnMessage && (
+                <Icon
+                    name={status === 'read' ? 'checkmark-done' : 'checkmark'}
+                    size={12}
+                    color={status === 'read' ? '#4FC3F7' : '#888'}
+                    style={styles.tick}
+                />
+            )}
         </View>
     );
 };
@@ -60,6 +77,10 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-end',
         marginTop: 4,
     },
+    tick: {
+        marginLeft: 4,
+        alignSelf: 'flex-end',
+    }
 });
 
 export default MessageBubble;

@@ -28,7 +28,7 @@ export default function ChatScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
     const [input, setInput] = useState('');
-    const { messages, listRef, send, remove, clearAll } = useChat();
+    const { messages, listRef, send, remove, clearAll, readSet } = useChat();
 
     const handleLogout = async () => {
         await authStore.logout();
@@ -39,6 +39,7 @@ export default function ChatScreen() {
             })
         );
     };
+
 
     const handleSend = () => {
         if (!input.trim()) return;
@@ -68,9 +69,10 @@ export default function ChatScreen() {
                 <FlatList
                     ref={listRef}
                     data={messages}
-                    keyExtractor={(item) => item.id}
+                    keyExtractor={(item) => `${item.id}-${item.status}`}
+                    extraData={messages}
                     renderItem={({ item }) => (
-                        <ChatMessage msg={item} onDelete={remove} />
+                        <ChatMessage msg={item} onDelete={remove} readSet={readSet} />
                     )}
                     contentContainerStyle={styles.chatContainer}
                     onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
@@ -118,7 +120,7 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         paddingHorizontal: 15,
         paddingVertical: Platform.OS === 'ios' ? 10 : 15,
-        backgroundColor: '#f1f1f1'
+        backgroundColor: '#f1f1f1',
     },
     chatContainer: {
         padding: 10,
