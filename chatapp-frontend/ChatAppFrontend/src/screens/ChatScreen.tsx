@@ -13,11 +13,10 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation, CommonActions } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import socket from '../utils/socket';
-import MessageBubble from '../components/MessageBubble';
 import authStore from '../stores/authStore';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { loadMessages, saveMessages } from '../services/chatStorageService';
+import { useChat } from '../hooks/useChat';
+import ChatMessage from '../components/ChatMessage';
 
 type RootStackParamList = {
     Login: undefined;
@@ -28,9 +27,8 @@ type RootStackParamList = {
 export default function ChatScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
-    const [messages, setMessages] = useState<{ text: string; sender: string }[]>([]);
     const [input, setInput] = useState('');
-    const flatListRef = useRef<FlatList>(null);
+    const { messages, listRef, send, remove, clearAll } = useChat();
 
     const handleLogout = async () => {
         await authStore.logout();
@@ -42,40 +40,11 @@ export default function ChatScreen() {
         );
     };
 
-    useEffect(() => {
-        (async () => {
-            const stored = await loadMessages();
-            setMessages(stored);
-        })();
-
-        const handleReceive = (data: { text: string; sender: string }) => {
-            setMessages(prev => {
-                const updated = [...prev, data];
-                saveMessages(updated);
-                return updated;
-            });
-        };
-
-        socket.on('receiveMessage', handleReceive);
-        return () => {
-            socket.off('receiveMessage', handleReceive);
-        };
-    }, []);
-
-    const sendMessage = () => {
-        if (input.trim() === '') return;
-
-        const newMsg = {
-            text: input,
-            sender: authStore.username,
-            receiver: 'all',
-        };
-
-        socket.emit('sendMessage', newMsg);
-        setMessages((prev) => [...prev, newMsg]);
+    const handleSend = () => {
+        if (!input.trim()) return;
+        send(input);
         setInput('');
     };
-
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['bottom', 'top']}>
@@ -86,24 +55,25 @@ export default function ChatScreen() {
             >
                 <View style={styles.header}>
                     <Text style={styles.headerTitle}>ChatApp</Text>
+
+                    <TouchableOpacity onPress={clearAll} style={{ marginRight: 50 }}>
+                        <Icon name='trash-bin-outline' size={24} color='#333' />
+                    </TouchableOpacity>
+
                     <TouchableOpacity onPress={handleLogout}>
                         <Icon name='log-out-outline' size={24} color='#333' />
                     </TouchableOpacity>
                 </View>
 
                 <FlatList
-                    ref={flatListRef}
+                    ref={listRef}
                     data={messages}
-                    keyExtractor={(_, index) => index.toString()}
+                    keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
-                        <MessageBubble
-                            message={item.text}
-                            sender={item.sender}
-                            isOwnMessage={item.sender === authStore.username}
-                        />
+                        <ChatMessage msg={item} onDelete={remove} />
                     )}
                     contentContainerStyle={styles.chatContainer}
-                    onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+                    onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
                 />
 
                 <View style={styles.inputContainer}>
@@ -113,7 +83,7 @@ export default function ChatScreen() {
                         value={input}
                         onChangeText={setInput}
                     />
-                    <TouchableOpacity onPress={sendMessage} style={styles.sendButton}>
+                    <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
                         <Text style={styles.sendText}>Send</Text>
                     </TouchableOpacity>
                 </View>
