@@ -26,9 +26,6 @@ export function useChat() {
         const url = `${API}/messages`;
         const token = authStore.token;
 
-        console.log("🛰️ [useChat] Fetching message history from:", url);
-        console.log("🛰️ [useChat] Using Bearer token:", token ? token.slice(0, 10) + "…" : "(no token)");
-
         (async () => {
             try {
                 const res = await axios.get<ChatMsg[]>(url, {
@@ -94,9 +91,21 @@ export function useChat() {
         socket.emit('sendMessage', { ...msg, receiver });
     };
 
-    const remove = (id: string) => {
+    const remove = async (id: string) => {
+        const url = `${API}/messages/${id}`;
+        const token = authStore.token;
+
+        try {
+            await axios.delete(url, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            console.log(`✅ [useChat] Server deleted message ${id}`);
+        } catch (err) {
+            console.warn(`⚠️ [useChat] Server delete failed (${(err as any).response?.status}), removing locally`, err);
+        }
+
         setMessages(prev => {
-            const next = prev.filter((m) => m.id !== id);
+            const next = prev.filter(m => m.id !== id);
             saveMessages(next);
             return next;
         });

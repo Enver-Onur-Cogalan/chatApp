@@ -4,8 +4,6 @@ const Message = require('../models/Message');
 const auth = require('../middlewares/authMiddleware');
 
 router.get('/', auth, async (req, res) => {
-    console.log('🛰️ [messageRoutes] GET /api/messages, user:', req.user);
-    console.log('🛰️ [messageRoutes] Authorization header:', req.headers.authorization);
     try {
         const msgs = await Message.find({ receiver: 'all' }).sort({ timestamp: 1 });
         const out = msgs.map(m => ({
@@ -20,6 +18,22 @@ router.get('/', auth, async (req, res) => {
     } catch (err) {
         console.error('❌ [messageRoutes] DB error:', err);
         return res.status(500).json({ message: 'Sunucu hatası' });
+    }
+});
+
+router.delete('/:id', auth, async (req, res) => {
+    const { id } = req.params;
+    console.log(`🗑️ [messageRoutes] DELETE /api/messages/${id} called by`, req.user.username);
+    try {
+        const result = await Message.deleteOne({ _id: id });
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ message: 'Mesaj bulunamadı' });
+        }
+        console.log(`🗑️ [messageRoutes] Message ${id} deleted by ${req.user.username}`);
+        return res.status(200).json({ message: 'Mesaj silindi' });
+    } catch (err) {
+        console.error('❌ [messageRoutes] Delete message error:', err);
+        return res.status(500).json({ message: 'Silme işlemi başarısız' });
     }
 });
 
