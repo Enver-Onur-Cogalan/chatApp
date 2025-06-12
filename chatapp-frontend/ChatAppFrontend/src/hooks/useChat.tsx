@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { loadMessages, saveMessages, clearMessages } from "../services/chatStorageService";
 import authStore from "../stores/authStore";
 import socket from "../utils/socket";
+import { Platform } from "react-native";
+import axios from "axios";
 
 export interface ChatMsg {
     id: string;
@@ -11,6 +13,9 @@ export interface ChatMsg {
     status: 'sent' | 'read';
 }
 
+const HOST = Platform.OS === "android" ? "10.0.2.2" : "localhost";
+const API = `http://${HOST}:5001/api`;
+
 export function useChat() {
     const [messages, setMessages] = useState<ChatMsg[]>([]);
     const listRef = useRef<any>(null);
@@ -18,17 +23,28 @@ export function useChat() {
 
     // load history once
     useEffect(() => {
-        socket.emit('register', authStore.username);
+        const url = `${API}/messages`;
+        const token = authStore.token;
+
+        console.log("🛰️ [useChat] Fetching message history from:", url);
+        console.log("🛰️ [useChat] Using Bearer token:", token ? token.slice(0, 10) + "…" : "(no token)");
 
         (async () => {
-            const stored = await loadMessages();
-            setMessages(
-                stored.map((m) => ({
-                    ...m,
-                    status: (m.status ?? 'sent') as 'sent' | 'read',
-                }))
-            );
+            try {
+                const res = await axios.get<ChatMsg[]>(url, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                console.log("✅ [useChat] History response:", res.data.length, "messages");
+                setMessages(res.data);
+            } catch (err: any) {
+                console.warn("⚠️ [useChat] History load failed, fallback to AsyncStorage:", err.response?.status, err.message);
+                const stored = await loadMessages();
+                console.log("📂 [useChat] Loaded from AsyncStorage:", stored.length, "messages");
+                setMessages(stored);
+            }
         })();
+
+        socket.emit('register', authStore.username);
 
         const onReceive = (data: ChatMsg) => {
             setMessages((prev) => {
@@ -87,8 +103,19 @@ export function useChat() {
     };
 
     const clearAll = async () => {
+        try {
+            const token = authStore.token;
+            await axios.delete(`${API}/messages`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            console.log('🗑️ [useChat] Server chat history cleared');
+        } catch (err) {
+            console.warn('⚠️ [useChat] Server clear failed, proceeding to local clear', err);
+        }
+
         await clearMessages();
         setMessages([]);
+        console.log('📂 [useChat] Local chat history cleared');
     };
 
     return { messages, listRef, send, remove, clearAll, readSet };

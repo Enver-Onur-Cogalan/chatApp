@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 const { Server } = require('socket.io');
 const authRoutes = require('./routes/authRoutes');
 const chatRoutes = require('./routes/chatRoutes');
+const messageRouters = require('./routes/messageRoutes');
 const { handleSocketConnection } = require('./sockets/socketManager');
 
 dotenv.config();
@@ -30,6 +31,7 @@ app.get('/', (req, res) => {
 });
 
 // API routes
+app.use('/api/messages', messageRouters);
 app.use('/api/auth', authRoutes);
 app.use('/api/chat', chatRoutes);
 
