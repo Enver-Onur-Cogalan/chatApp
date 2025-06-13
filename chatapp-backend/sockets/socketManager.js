@@ -3,17 +3,17 @@ const Message = require('../models/Message');
 
 
 const handleSocketConnection = (io, socket) => {
-    console.log('🟢 Yeni bağlantı:', socket.id);
+    console.log('🟢 New link:', socket.id);
 
     // Kullanıcı kimliği
     socket.on('register', (username) => {
         users.set(username, socket.id);
-        console.log(`✅ ${username} bağlandı -> ${socket.id}`);
+        console.log(`✅ ${username} connected -> ${socket.id}`);
     });
 
     // Mesajın alıcıya iletlimesi
     socket.on('sendMessage', async (data) => {
-        console.log('🟢 [CLIENT] sendMessage alındı:', data);
+        console.log('🟢 [CLIENT] sendMessage received:', data);
 
         const sender = data.sender;
         const content = data.content ?? data.text;
@@ -23,7 +23,7 @@ const handleSocketConnection = (io, socket) => {
 
         try {
             const msgDoc = await Message.create({ sender, receiver, content });
-            console.log('💾 Mesaj DB’ye kaydedildi');
+            console.log('💾 Message saved to DB');
 
             const payload = {
                 id: msgDoc._id.toString(),
@@ -42,14 +42,14 @@ const handleSocketConnection = (io, socket) => {
                 if (id) io.to(id).emit('receiveMessage', payload);
             }
         } catch (e) {
-            console.error("❌ DB'ye kaydetme hatası:", e)
+            console.error('❌ Error saving to DB:', e)
         }
 
     });
 
     // Mesajın okunması
     socket.on('readMessage', async ({ messageId, reader }) => {
-        console.log("🟢 [SERVER] readMessage alındı:", { messageId, reader });
+        console.log("🟢 [SERVER] readMessage received:", { messageId, reader });
         try {
             const msg = await Message.findByIdAndUpdate(
                 messageId,
@@ -70,12 +70,12 @@ const handleSocketConnection = (io, socket) => {
     });
 
     socket.on('disconnect', () => {
-        console.log('🔴 Bağlantı kesildi:', socket.id);
+        console.log('🔴 Connection is lost:', socket.id);
         // users map'ten silme
         for (let [username, id] of users.entries()) {
             if (id === socket.id) {
                 users.delete(username);
-                console.log(`❌ ${username} çıkarıldı`);
+                console.log(`❌ ${username} was removed`);
                 break;
             }
         }

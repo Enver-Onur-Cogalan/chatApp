@@ -13,7 +13,7 @@ const Stack = createNativeStackNavigator();
 const AppNavigator = observer(() => {
     const isLoggedIn = authStore.isLoggedIn;
 
-    // OtoLogin
+    // AutoLogin
     useEffect(() => {
         authStore.loadUserFromStorage();
     }, []);

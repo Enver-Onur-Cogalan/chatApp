@@ -17,7 +17,7 @@ router.get('/', auth, async (req, res) => {
         return res.json(out);
     } catch (err) {
         console.error('❌ [messageRoutes] DB error:', err);
-        return res.status(500).json({ message: 'Sunucu hatası' });
+        return res.status(500).json({ message: 'Server error' });
     }
 });
 
@@ -27,13 +27,13 @@ router.delete('/:id', auth, async (req, res) => {
     try {
         const result = await Message.deleteOne({ _id: id });
         if (result.deletedCount === 0) {
-            return res.status(404).json({ message: 'Mesaj bulunamadı' });
+            return res.status(404).json({ message: 'No message found' });
         }
         console.log(`🗑️ [messageRoutes] Message ${id} deleted by ${req.user.username}`);
-        return res.status(200).json({ message: 'Mesaj silindi' });
+        return res.status(200).json({ message: 'Message deleted' });
     } catch (err) {
         console.error('❌ [messageRoutes] Delete message error:', err);
-        return res.status(500).json({ message: 'Silme işlemi başarısız' });
+        return res.status(500).json({ message: 'Deletion failed' });
     }
 });
 
@@ -44,7 +44,7 @@ router.delete('/', auth, async (req, res) => {
         return res.status(200).json({ message: 'All messages deleted' });
     } catch (err) {
         console.error('❌ [messageRoutes] Delete all error:', err);
-        return res.status(500).json({ message: 'Silme işlemi başarısız ' });
+        return res.status(500).json({ message: 'Deletion failed' });
     }
 });
 

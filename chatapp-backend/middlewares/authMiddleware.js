@@ -4,7 +4,7 @@ const verifyToken = (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ message: 'Yetkilendirme başarısız (token eksik)' });
+        return res.status(401).json({ message: 'Authorization failed (token missing)' });
     }
 
     const token = authHeader.split(' ')[1];
@@ -14,7 +14,7 @@ const verifyToken = (req, res, next) => {
         req.user = decoded; // { id, username }
         next();
     } catch (err) {
-        return res.status(401).json({ message: 'Geçersiz token' });
+        return res.status(401).json({ message: 'Invalid token' });
     }
 };
 

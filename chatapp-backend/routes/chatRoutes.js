@@ -14,8 +14,8 @@ router.post('/send', verifyToken, async (req, res) => {
         io.emit('receiveMessage', { text: content, sender });
         res.status(201).json(msg);
     } catch (err) {
-        console.error('❌ Mesaj gönderme hatası:', err);
-        res.status(500).json({ message: 'Mesaj gönderilemedi', error: err.message });
+        console.error('❌[chatRoutes] Error sending message:', err);
+        res.status(500).json({ message: 'Message could not be sent', error: err.message });
     }
 });
 
@@ -30,12 +30,12 @@ router.get('/history/:username', verifyToken, async (req, res) => {
                 { sender: currentUser, receiver: otherUser },
                 { sender: otherUser, receiver: currentUser },
             ],
-        }).sort({ timestamp: 1 }); // eskiden yeniye sırala
+        }).sort({ timestamp: 1 }); // Sort from oldest to newest
 
         res.status(200).json(messages);
     } catch (error) {
-        console.error('Mesaj geçmişi hatası:', error);
-        res.status(500).json({ message: 'Mesaj geçmişi alınamadı', error: error.message });
+        console.error('Message history error:', error);
+        res.status(500).json({ message: 'Could not retrieve message history', error: error.message });
     }
 });
 

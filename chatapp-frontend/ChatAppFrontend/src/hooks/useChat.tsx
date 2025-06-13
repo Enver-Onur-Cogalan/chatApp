@@ -61,11 +61,12 @@ export function useChat() {
         };
 
         const onRead = (data: { id: string; reader: string; }) => {
-            // console.log("✅ [HOOK] messageRead received:", data);
+            console.log("✅ [HOOK] messageRead received:", data);
             setMessages((prev) => {
                 const next = prev.map((m) =>
                     m.id === data.id ? { ...m, status: 'read' } : m
                 );
+                console.log("📣 [HOOK] messages after marking read:", next);
                 saveMessages(next);
                 return next;
             });

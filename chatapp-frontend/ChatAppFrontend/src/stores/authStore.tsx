@@ -34,7 +34,7 @@ class AuthStore {
                 });
             }
         } catch (err) {
-            console.log('Kullanıcı bilgileri yüklenemedi:', err);
+            console.log('Failed to load user information:', err);
         }
     }
 
@@ -58,7 +58,7 @@ class AuthStore {
             });
         } catch (err: any) {
             runInAction(() => {
-                this.error = err?.response?.data?.message || 'Bir hata oluştu';
+                this.error = err?.response?.data?.message || 'An error occurred';
                 this.isLoading = false;
             });
         }
@@ -84,7 +84,7 @@ class AuthStore {
             });
         } catch (err: any) {
             runInAction(() => {
-                this.error = err?.response?.data?.message || 'Bir hata oluştu';
+                this.error = err?.response?.data?.message || 'An error occurred';
                 this.isLoading = false;
             });
         }

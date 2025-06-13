@@ -29,7 +29,7 @@ export async function loadMessages(): Promise<ChatMsg[]> {
 
         return res.data;
     } catch (e) {
-        console.warn('Mesaj geçmişi yüklenemedi (API), fallback olarak yerelden yüklenecek:', e);
+        console.warn('Failed to load message history (API), will load locally as fallback:', e);
     }
 
     try {

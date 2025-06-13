@@ -19,12 +19,6 @@ const formatTime = (iso: string) => {
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwnMessage, sender, timestamp, status = 'sent' }) => {
 
-    // console.log("🧐 [UI] MessageBubble", {
-    //     id: sender + "|" + timestamp,
-    //     isOwnMessage,
-    //     status,
-    //     message,
-    // });
     return (
         <View
             style={[
