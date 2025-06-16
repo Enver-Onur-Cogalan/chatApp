@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     FlatList,
     KeyboardAvoidingView,
@@ -17,6 +17,7 @@ import authStore from '../stores/authStore';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useChat } from '../hooks/useChat';
 import ChatMessage from '../components/ChatMessage';
+import socket from '../utils/socket';
 
 type RootStackParamList = {
     Login: undefined;
@@ -28,7 +29,9 @@ export default function ChatScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
     const [input, setInput] = useState('');
-    const { messages, listRef, send, remove, clearAll, readSet } = useChat();
+    const [selectedUser, setSelectedUser] = useState<string | undefined>(undefined);
+    const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
+    const { messages, listRef, send, remove, clearAll, readSet } = useChat(selectedUser);
 
     const handleLogout = async () => {
         await authStore.logout();
@@ -47,6 +50,15 @@ export default function ChatScreen() {
         setInput('');
     };
 
+    useEffect(() => {
+        socket.on('presence', (users: string[]) => {
+            setOnlineUsers(users);
+        });
+        return () => {
+            socket.off('presence');
+        };
+    }, []);
+
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['bottom', 'top']}>
             <KeyboardAvoidingView
@@ -56,6 +68,31 @@ export default function ChatScreen() {
             >
                 <View style={styles.header}>
                     <Text style={styles.headerTitle}>ChatApp</Text>
+                    <View style={styles.roomsContainer}>
+                        <TouchableOpacity
+                            onPress={() => setSelectedUser(undefined)}
+                            style={[
+                                styles.roomButton,
+                                !selectedUser && styles.roomButtonActive
+                            ]}
+                        >
+                            <Text>Global</Text>
+                        </TouchableOpacity>
+                        {onlineUsers
+                            .filter(user => user !== authStore.username)
+                            .map(user => (
+                                <TouchableOpacity
+                                    key={user}
+                                    onPress={() => setSelectedUser(user)}
+                                    style={[
+                                        styles.roomButton,
+                                        selectedUser === user && styles.roomButtonActive
+                                    ]}
+                                >
+                                    <Text>{user}</Text>
+                                </TouchableOpacity>
+                            ))}
+                    </View>
 
                     <TouchableOpacity onPress={clearAll} style={{ marginRight: 50 }}>
                         <Icon name='trash-bin-outline' size={24} color='#333' />
@@ -141,5 +178,24 @@ const styles = StyleSheet.create({
     sendText: {
         color: '#fff',
         fontWeight: 'bold',
-    }
+    },
+    roomButton: {
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        marginHorizontal: 4,
+        borderRadius: 4,
+        borderWidth: 1,
+        borderColor: '#888',
+    },
+    roomButtonActive: {
+        backgroundColor: '#4CAF50',
+        borderColor: '#4CAF50',
+    },
+    roomsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        marginTop: 8,
+        marginBottom: 4,
+    },
 });

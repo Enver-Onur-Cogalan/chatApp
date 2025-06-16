@@ -21,6 +21,40 @@ router.get('/', auth, async (req, res) => {
     }
 });
 
+// ——— Private (1-1) chat history ———
+router.get('/private/:withUser', auth, async (req, res) => {
+    const current = req.user.username;
+    const { withUser } = req.params;
+
+    if (!withUser) {
+        return res.status(400).json({ message: 'withUser param is required' });
+    }
+
+    try {
+        const msgs = await Message.find({
+            $or: [
+                { sender: current, receiver: withUser },
+                { sender: withUser, receiver: current },
+            ]
+        }).sort({ timestamp: 1 });
+
+        const out = msgs.map(m => ({
+            id: m._id.toString(),
+            text: m.content,
+            sender: m.sender,
+            receiver: m.receiver,
+            timestamp: m.timestamp.toISOString(),
+            status: m.status ?? 'sent'
+        }));
+
+        console.log(`✅ [messageRoutes] /private/${withUser} → returning ${out.length} messages`);
+        return res.json(out);
+    } catch (err) {
+        console.error('❌ [messageRoutes] private DB error:', err);
+        return res.status(500).json({ message: 'Server error' });
+    }
+});
+
 router.delete('/:id', auth, async (req, res) => {
     const { id } = req.params;
     console.log(`🗑️ [messageRoutes] DELETE /api/messages/${id} called by`, req.user.username);

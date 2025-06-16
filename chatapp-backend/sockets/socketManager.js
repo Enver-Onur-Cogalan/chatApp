@@ -5,13 +5,34 @@ const Message = require('../models/Message');
 const handleSocketConnection = (io, socket) => {
     console.log('🟢 New link:', socket.id);
 
-    // Kullanıcı kimliği
+    let currentUser = null;
+
+    const broadcastPresence = () => {
+        const onlineUsers = Array.from(users.keys());
+        io.to('global').emit('presence', onlineUsers);
+        console.log('🛰️ [SERVER] current presence:', onlineUsers);
+    };
+
+    // User ID
     socket.on('register', (username) => {
+        currentUser = username;
         users.set(username, socket.id);
-        console.log(`✅ ${username} connected -> ${socket.id}`);
+
+        socket.join('global');
+
+        const privateRoom = [currentUser].sort().join('#');
+        socket.join(privateRoom);
+
+        const joinedRooms = Array.from(socket.rooms)
+            .filter(r => r !== socket.id)
+            .join(', ');
+
+        console.log(`✅ ${username} registered. Joined rooms: ${joinedRooms}`);
+
+        broadcastPresence();
     });
 
-    // Mesajın alıcıya iletlimesi
+    // Delivering the message to the recipient
     socket.on('sendMessage', async (data) => {
         console.log('🟢 [CLIENT] sendMessage received:', data);
 
@@ -33,21 +54,29 @@ const handleSocketConnection = (io, socket) => {
                 status: msgDoc.status,
             };
 
-            socket.emit('receiveMessage', payload);
+            const room = receiver === 'all'
+                ? 'global'
+                : [sender, receiver].sort().join('#');
 
-            if (receiver === 'all') {
-                socket.broadcast.emit('receiveMessage', payload);
-            } else {
-                const id = users.get(receiver);
-                if (id) io.to(id).emit('receiveMessage', payload);
+            socket.join(room);
+            if (receiver !== 'all') {
+                const recvSocketId = users.get(receiver);
+                if (recvSocketId) {
+                    const recvSocket = io.sockets.sockets.get(recvSocketId);
+                    recvSocket?.join(room);
+                }
             }
+
+            io.to(room).emit('receiveMessage', payload);
+            console.log(`📨 Message sent to room: ${room}`)
+
         } catch (e) {
             console.error('❌ Error saving to DB:', e)
         }
 
     });
 
-    // Mesajın okunması
+    // Reading the message
     socket.on('readMessage', async ({ messageId, reader }) => {
         console.log("🟢 [SERVER] readMessage received:", { messageId, reader });
         try {
@@ -57,12 +86,13 @@ const handleSocketConnection = (io, socket) => {
                 { new: true }
             );
 
-            const senderSocket = users.get(msg.sender);
-            if (senderSocket) {
-                io.to(senderSocket).emit('messageRead', {
+            const senderSocketId = users.get(msg.sender);
+            if (senderSocketId) {
+                io.to(senderSocketId).emit('messageRead', {
                     id: msg._id.toString(),
                     reader,
                 });
+                console.log(`📨 Read notification sent: ${msg.sender}`);
             }
         } catch (err) {
             console.error('❌ ReadReceipt error:', err);
@@ -71,7 +101,7 @@ const handleSocketConnection = (io, socket) => {
 
     socket.on('disconnect', () => {
         console.log('🔴 Connection is lost:', socket.id);
-        // users map'ten silme
+        // Delete from users map
         for (let [username, id] of users.entries()) {
             if (id === socket.id) {
                 users.delete(username);
@@ -79,6 +109,8 @@ const handleSocketConnection = (io, socket) => {
                 break;
             }
         }
+
+        broadcastPresence();
     });
 };
 
