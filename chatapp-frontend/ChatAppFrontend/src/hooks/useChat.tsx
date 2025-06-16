@@ -118,8 +118,12 @@ export function useChat(withUser?: string) {
 
     const clearAll = useCallback(async () => {
         const token = authStore.token;
+        const url = withUser
+            ? `${API}/private/${withUser}`
+            : API;
+
         try {
-            await axios.delete(API, {
+            await axios.delete(url, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             console.log("🗑️ [useChat] Server chat history cleared");
@@ -129,7 +133,7 @@ export function useChat(withUser?: string) {
         await clearMessages();
         setMessages([]);
         console.log("📂 [useChat] Local chat history cleared");
-    }, []);
+    }, [withUser]);
 
     return { messages, listRef, send, remove, clearAll, readSet };
 }

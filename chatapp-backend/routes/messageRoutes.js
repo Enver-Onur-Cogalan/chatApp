@@ -82,4 +82,24 @@ router.delete('/', auth, async (req, res) => {
     }
 });
 
+// Clear private chat
+router.delete('/private/:user', auth, async (req, res) => {
+    const me = req.user.username;
+    const other = req.params.user;
+
+    try {
+        await Message.deleteMany({
+            $or: [
+                { sender: me, receiver: other },
+                { sender: other, receiver: me },
+            ]
+        });
+        console.log(`🗑️ [messageRoutes] Private chat ${me}<->${other} cleared`);
+        return res.status(200).json({ message: 'Private chat cleared' });
+    } catch (err) {
+        console.error('❌ [messageRoutes] Delete private error:', err);
+        return res.status(500).json({ message: 'Deletion failed' });
+    }
+});
+
 module.exports = router;
