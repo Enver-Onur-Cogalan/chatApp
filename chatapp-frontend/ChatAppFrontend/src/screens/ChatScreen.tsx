@@ -12,12 +12,13 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation, CommonActions } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import authStore from '../stores/authStore';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useChat } from '../hooks/useChat';
 import ChatMessage from '../components/ChatMessage';
 import socket from '../utils/socket';
+import { UserListModal } from '../components/modals/UserListModal';
 
 type RootStackParamList = {
     Login: undefined;
@@ -31,7 +32,24 @@ export default function ChatScreen() {
     const [input, setInput] = useState('');
     const [selectedUser, setSelectedUser] = useState<string | undefined>(undefined);
     const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
-    const { messages, listRef, send, remove, clearAll, readSet } = useChat(selectedUser);
+    const [modalVisible, setModalVisible] = useState(false);
+
+    const { messages, listRef, send, remove, clearAll, readSet, typingUsers, sendTyping } = useChat(selectedUser);
+
+    useEffect(() => {
+        socket.on('presence', (users: string[]) => {
+            setOnlineUsers(users);
+        });
+        return () => {
+            socket.off('presence');
+        };
+    }, []);
+
+    useEffect(() => {
+        if (selectedUser) {
+            socket.emit('joinRoom', { other: selectedUser });
+        }
+    }, [selectedUser]);
 
     const handleLogout = async () => {
         await authStore.logout();
@@ -47,20 +65,20 @@ export default function ChatScreen() {
     const handleSend = () => {
         if (!input.trim()) return;
         send(input);
+        sendTyping(false);
         setInput('');
     };
 
-    useEffect(() => {
-        socket.on('presence', (users: string[]) => {
-            setOnlineUsers(users);
-        });
-        return () => {
-            socket.off('presence');
-        };
-    }, []);
 
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['bottom', 'top']}>
+            <UserListModal
+                visible={modalVisible}
+                users={onlineUsers}
+                onClose={() => setModalVisible(false)}
+                onSelect={user => setSelectedUser(user)}
+            />
+
             <KeyboardAvoidingView
                 style={styles.container}
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -78,20 +96,13 @@ export default function ChatScreen() {
                         >
                             <Text>Global</Text>
                         </TouchableOpacity>
-                        {onlineUsers
-                            .filter(user => user !== authStore.username)
-                            .map(user => (
-                                <TouchableOpacity
-                                    key={user}
-                                    onPress={() => setSelectedUser(user)}
-                                    style={[
-                                        styles.roomButton,
-                                        selectedUser === user && styles.roomButtonActive
-                                    ]}
-                                >
-                                    <Text>{user}</Text>
-                                </TouchableOpacity>
-                            ))}
+
+                        <TouchableOpacity
+                            onPress={() => setModalVisible(true)}
+                            style={styles.userListButton}
+                        >
+                            <Icon name='people' size={20} color='#333' />
+                        </TouchableOpacity>
                     </View>
 
                     <TouchableOpacity onPress={clearAll} style={{ marginRight: 50 }}>
@@ -114,15 +125,28 @@ export default function ChatScreen() {
                     contentContainerStyle={styles.chatContainer}
                     onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
                 />
+                {typingUsers.length > 0 && (
+                    <View style={styles.typingContainer}>
+                        <Text style={styles.typingText}>
+                            {typingUsers.join(', ')} typing...
+                        </Text>
+                    </View>
+                )}
 
                 <View style={styles.inputContainer}>
                     <TextInput
                         style={styles.input}
                         placeholder='Write your message...'
                         value={input}
-                        onChangeText={setInput}
+                        onChangeText={text => {
+                            setInput(text);
+                            sendTyping(true);
+                        }}
+                        onBlur={() => sendTyping(false)}
+                        onEndEditing={() => sendTyping(false)}
+                        onSubmitEditing={() => sendTyping(false)}
                     />
-                    <TouchableOpacity onPress={handleSend} style={styles.sendButton}>
+                    <TouchableOpacity onPress={() => { handleSend(); sendTyping(false); }} style={styles.sendButton}>
                         <Text style={styles.sendText}>Send</Text>
                     </TouchableOpacity>
                 </View>
@@ -197,5 +221,17 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap',
         marginTop: 8,
         marginBottom: 4,
+    },
+    userListButton: {
+        alignItems: 'center',
+        marginLeft: 4,
+    },
+    typingContainer: {
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+    },
+    typingText: {
+        fontStyle: 'italic',
+        color: 'black',
     },
 });

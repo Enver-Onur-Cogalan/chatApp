@@ -19,6 +19,7 @@ const API = `http://${HOST}:5001/api/messages`;
 
 export function useChat(withUser?: string) {
     const [messages, setMessages] = useState<ChatMsg[]>([]);
+    const [typingUsers, setTypingUsers] = useState<string[]>([]);
     const listRef = useRef<any>(null);
     const readSet = useRef<Set<string>>(new Set());
 
@@ -77,11 +78,26 @@ export function useChat(withUser?: string) {
             });
         };
 
+        const onTyping = ({ sender }: { sender: string }) => {
+            if (sender === authStore.username) return;
+            setTypingUsers(u => Array.from(new Set([...u, sender])));
+        };
+        const onStop = ({ sender }: { sender: string }) => {
+            if (sender === authStore.username) return;
+            setTypingUsers(u => u.filter(x => x !== sender));
+        };
+
         socket.on('receiveMessage', onReceive);
         socket.on('messageRead', onRead);
+        socket.on('typing', onTyping);
+        socket.on('stopTyping', onStop);
+
         return () => {
             socket.off('receiveMessage', onReceive);
             socket.off('messageRead', onRead);
+            socket.off('typing', onTyping);
+            socket.off('stopTyping', onStop);
+
         };
     }, [withUser]);
 
@@ -96,6 +112,13 @@ export function useChat(withUser?: string) {
             status: "sent",
         };
         socket.emit("sendMessage", msg);
+    }, [withUser]);
+
+    const sendTyping = useCallback((isTyping: boolean) => {
+        socket.emit(isTyping ? 'typing' : 'stopTyping', {
+            sender: authStore.username,
+            receiver: withUser ?? 'all'
+        });
     }, [withUser]);
 
     const remove = useCallback(async (id: string) => {
@@ -135,5 +158,5 @@ export function useChat(withUser?: string) {
         console.log("📂 [useChat] Local chat history cleared");
     }, [withUser]);
 
-    return { messages, listRef, send, remove, clearAll, readSet };
+    return { messages, listRef, send, sendTyping, typingUsers, remove, clearAll, readSet };
 }

@@ -20,9 +20,6 @@ const handleSocketConnection = (io, socket) => {
 
         socket.join('global');
 
-        const privateRoom = [currentUser].sort().join('#');
-        socket.join(privateRoom);
-
         const joinedRooms = Array.from(socket.rooms)
             .filter(r => r !== socket.id)
             .join(', ');
@@ -30,6 +27,22 @@ const handleSocketConnection = (io, socket) => {
         console.log(`✅ ${username} registered. Joined rooms: ${joinedRooms}`);
 
         broadcastPresence();
+    });
+
+    // When the user starts typing
+    socket.on('typing', ({ receiver, sender }) => {
+        const room = receiver === 'all'
+            ? 'global'
+            : [sender, receiver].sort().join('#');
+        io.to(room).emit('typing', { sender });
+    });
+
+    // When the user stops typing
+    socket.on('stopTyping', ({ sender, receiver }) => {
+        const room = receiver === 'all'
+            ? 'global'
+            : [sender, receiver].sort().join('#');
+        io.to(room).emit('stopTyping', { sender });
     });
 
     // Delivering the message to the recipient
@@ -97,6 +110,13 @@ const handleSocketConnection = (io, socket) => {
         } catch (err) {
             console.error('❌ ReadReceipt error:', err);
         }
+    });
+
+    socket.on('joinRoom', ({ other }) => {
+        if (!currentUser) return;
+        const room = [currentUser, other].sort().join('#');
+        socket.join(room);
+        console.log(`🔑 ${currentUser} joined private room: ${room}`);
     });
 
     socket.on('disconnect', () => {
