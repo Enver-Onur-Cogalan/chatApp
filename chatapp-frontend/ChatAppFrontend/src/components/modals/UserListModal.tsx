@@ -2,23 +2,28 @@ import React from "react";
 import { Modal, Pressable, StyleSheet, View, Text, FlatList } from "react-native";
 import Icon from 'react-native-vector-icons/Ionicons';
 import authStore from "../../stores/authStore";
+import { PresenceInfo } from "../../hooks/useChat";
 
 interface Props {
     visible: boolean;
-    users: string[];
-    onlineUsers: string[];
+    presence: PresenceInfo[];
     onClose: () => void;
     onSelect: (user?: string) => void;
 }
 
 export const UserListModal: React.FC<Props> = ({
     visible,
-    users,
-    onlineUsers,
+    presence,
     onClose,
     onSelect,
 }) => {
-    const list = users.filter(u => u !== authStore.username);
+    const list = presence.filter(p => p.username !== authStore.username);
+
+    const formatLastSeen = (iso: string | null) => {
+        if (!iso) return 'Never';
+        const d = new Date(iso);
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
 
     return (
         <Modal
@@ -38,26 +43,29 @@ export const UserListModal: React.FC<Props> = ({
 
                     <FlatList
                         data={list}
-                        keyExtractor={item => item}
+                        keyExtractor={item => item.username}
                         renderItem={({ item }) => {
-                            const isOnline = onlineUsers.includes(item);
+                            const { username, online, lastSeen } = item;
                             return (
                                 <Pressable
                                     style={styles.card}
                                     onPress={() => {
-                                        onSelect(item);
+                                        onSelect(username);
                                         onClose();
                                     }}
                                 >
-                                    <Text style={styles.name}>{item}</Text>
+                                    <Text style={styles.name}>{username}</Text>
                                     <View style={styles.statusRow}>
                                         <View style={[
                                             styles.dot,
-                                            { backgroundColor: isOnline ? 'green' : 'red' },
+                                            online ? styles.onlineDot : styles.offlineDot,
                                         ]}
                                         />
                                         <Text style={styles.statusText}>
-                                            {isOnline ? 'Online' : 'Offline'}
+                                            {online
+                                                ? 'Online'
+                                                : `Last seen ${lastSeen ? formatLastSeen(lastSeen) : 'Never'}`
+                                            }
                                         </Text>
                                     </View>
                                 </Pressable>
@@ -117,6 +125,12 @@ const styles = StyleSheet.create({
         height: 8,
         borderRadius: 10,
         marginRight: 6,
+    },
+    onlineDot: {
+        backgroundColor: 'green',
+    },
+    offlineDot: {
+        backgroundColor: 'red',
     },
     statusText: {
         fontSize: 14,

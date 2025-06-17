@@ -33,7 +33,7 @@ export default function ChatScreen() {
     const [selectedUser, setSelectedUser] = useState<string | undefined>(undefined);
     const [modalVisible, setModalVisible] = useState(false);
 
-    const { messages, listRef, send, remove, clearAll, readSet, typingUsers, sendTyping, allUsers, onlineUsers } = useChat(selectedUser);
+    const { messages, listRef, send, remove, clearAll, readSet, typingUsers, sendTyping, presence } = useChat(selectedUser);
 
     useEffect(() => {
         if (selectedUser) {
@@ -43,7 +43,6 @@ export default function ChatScreen() {
 
     const handleLogout = async () => {
         socket.emit('logout', authStore.username);
-        socket.disconnect();
 
         await authStore.logout();
         navigation.dispatch(
@@ -67,11 +66,11 @@ export default function ChatScreen() {
         <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['bottom', 'top']}>
             <UserListModal
                 visible={modalVisible}
-                users={allUsers}
-                onlineUsers={onlineUsers}
+                presence={presence}
                 onClose={() => setModalVisible(false)}
                 onSelect={user => setSelectedUser(user)}
             />
+            {modalVisible && console.log('💬 [ChatScreen] opening UserListModal with presence:', presence)}
 
             <KeyboardAvoidingView
                 style={styles.container}

@@ -1,5 +1,6 @@
 const users = new Map();
 const Message = require('../models/Message');
+const lastSeen = new Map(); // username -> Date
 
 
 const handleSocketConnection = (io, socket) => {
@@ -8,15 +9,23 @@ const handleSocketConnection = (io, socket) => {
     let currentUser = null;
 
     const broadcastPresence = () => {
-        const onlineUsers = Array.from(users.keys());
-        io.to('global').emit('presence', onlineUsers);
-        console.log('🛰️ [SERVER] current presence:', onlineUsers);
+        const allUsers = new Set([...users.keys(), ...lastSeen.keys()]);
+        const presenceInfo = Array.from(allUsers).map(username => ({
+            username,
+            online: users.has(username),
+            lastSeen: users.has(username)
+                ? null
+                : (lastSeen.get(username).toISOString() ?? null)
+        }));
+        io.to('global').emit('presence', presenceInfo);
+        console.log('✔️ [broadcastPresence] emitted presence:', presenceInfo);
     };
 
     // User ID
     socket.on('register', (username) => {
         currentUser = username;
         users.set(username, socket.id);
+        lastSeen.delete(username);
 
         socket.join('global');
 
@@ -33,6 +42,7 @@ const handleSocketConnection = (io, socket) => {
     socket.on('logout', (username) => {
         if (users.has(username)) {
             users.delete(username);
+            lastSeen.set(username, new Date());
             console.log(`🔴 [logout] ${username} removed by logout event`);
             broadcastPresence();
         }
@@ -134,7 +144,8 @@ const handleSocketConnection = (io, socket) => {
         for (let [username, id] of users.entries()) {
             if (id === socket.id) {
                 users.delete(username);
-                console.log(`❌ ${username} was removed`);
+                lastSeen.set(username, new Date());
+                console.log(`🔴 [disconnect] removed ${username}, set lastSeen:`, lastSeen.get(username));
                 break;
             }
         }

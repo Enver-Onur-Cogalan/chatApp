@@ -14,6 +14,12 @@ export interface ChatMsg {
     status: 'sent' | 'read';
 }
 
+export interface PresenceInfo {
+    username: string;
+    online: boolean;
+    lastSeen: string | null;
+}
+
 const HOST = Platform.OS === "android" ? "10.0.2.2" : "localhost";
 const API_BASE = `http://${HOST}:5001/api`;
 const MSG_API = `${API_BASE}/messages`;
@@ -23,13 +29,46 @@ const USERS_API = `${API_BASE}/users`;
 export function useChat(withUser?: string) {
     const [messages, setMessages] = useState<ChatMsg[]>([]);
     const [typingUsers, setTypingUsers] = useState<string[]>([]);
-    const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
+    const [presence, setPresence] = useState<PresenceInfo[]>([]);
     const [allUsers, setAllUsers] = useState<string[]>([]);
     const listRef = useRef<any>(null);
     const readSet = useRef<Set<string>>(new Set());
 
+    useEffect(() => {
+        (async () => {
+            try {
+                const { data: users } = await axios.get<string[]>(USERS_API, {
+                    headers: { Authorization: `Bearer ${authStore.token}` }
+                });
+                setAllUsers(users);
+
+                setPresence(users.map(u => ({
+                    username: u,
+                    online: false,
+                    lastSeen: null,
+                })));
+            } catch (e) {
+                console.warn("⚠️ couldn’t load all users", e);
+            }
+        })();
+    }, []);
+
+    useEffect(() => {
+        const handlePresence = (list: PresenceInfo[]) => {
+            console.log("🛰️ [useChat:onPresence] incoming presence:", list);
+            setPresence(list);
+        }
+
+        socket.on('presence', handlePresence);
+        return () => { socket.off('presence', handlePresence); };
+    }, []);
+
     // load history once
     useEffect(() => {
+        if (!socket.connected) {
+            socket.connect();
+        }
+
         const token = authStore.token;
         const url = withUser
             ? `${MSG_API}/private/${withUser}`
@@ -83,9 +122,6 @@ export function useChat(withUser?: string) {
             });
         };
 
-        const onPresence = (list: string[]) => {
-            setOnlineUsers(list);
-        };
 
         const onTyping = ({ sender }: { sender: string }) => {
             if (sender === authStore.username) return;
@@ -100,14 +136,12 @@ export function useChat(withUser?: string) {
         socket.on('messageRead', onRead);
         socket.on('typing', onTyping);
         socket.on('stopTyping', onStop);
-        socket.on('presence', onPresence);
 
         return () => {
             socket.off('receiveMessage', onReceive);
             socket.off('messageRead', onRead);
             socket.off('typing', onTyping);
             socket.off('stopTyping', onStop);
-            socket.off('presence', onPresence);
         };
     }, [withUser]);
 
@@ -132,7 +166,7 @@ export function useChat(withUser?: string) {
     }, [withUser]);
 
     const remove = useCallback(async (id: string) => {
-        const url = `${API}/${id}`;
+        const url = `${MSG_API}/${id}`;
         const token = authStore.token;
         try {
             await axios.delete(url, {
@@ -152,8 +186,8 @@ export function useChat(withUser?: string) {
     const clearAll = useCallback(async () => {
         const token = authStore.token;
         const url = withUser
-            ? `${API}/private/${withUser}`
-            : API;
+            ? `${MSG_API}/private/${withUser}`
+            : MSG_API;
 
         try {
             await axios.delete(url, {
@@ -181,5 +215,17 @@ export function useChat(withUser?: string) {
         })();
     }, []);
 
-    return { messages, listRef, send, sendTyping, typingUsers, remove, clearAll, readSet, allUsers, onlineUsers };
+    return {
+        messages,
+        listRef,
+        send,
+        sendTyping,
+        typingUsers,
+        remove,
+        clearAll,
+        readSet,
+        allUsers,
+        onlineUsers: presence.filter(p => p.online).map(p => p.username),
+        presence,
+    };
 }
