@@ -15,11 +15,16 @@ export interface ChatMsg {
 }
 
 const HOST = Platform.OS === "android" ? "10.0.2.2" : "localhost";
-const API = `http://${HOST}:5001/api/messages`;
+const API_BASE = `http://${HOST}:5001/api`;
+const MSG_API = `${API_BASE}/messages`;
+const USERS_API = `${API_BASE}/users`;
+
 
 export function useChat(withUser?: string) {
     const [messages, setMessages] = useState<ChatMsg[]>([]);
     const [typingUsers, setTypingUsers] = useState<string[]>([]);
+    const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
+    const [allUsers, setAllUsers] = useState<string[]>([]);
     const listRef = useRef<any>(null);
     const readSet = useRef<Set<string>>(new Set());
 
@@ -27,8 +32,8 @@ export function useChat(withUser?: string) {
     useEffect(() => {
         const token = authStore.token;
         const url = withUser
-            ? `${API}/private/${withUser}`
-            : API;
+            ? `${MSG_API}/private/${withUser}`
+            : MSG_API;
 
         console.log("🛰️ [useChat] Fetching history from:", url);
 
@@ -78,6 +83,10 @@ export function useChat(withUser?: string) {
             });
         };
 
+        const onPresence = (list: string[]) => {
+            setOnlineUsers(list);
+        };
+
         const onTyping = ({ sender }: { sender: string }) => {
             if (sender === authStore.username) return;
             setTypingUsers(u => Array.from(new Set([...u, sender])));
@@ -91,13 +100,14 @@ export function useChat(withUser?: string) {
         socket.on('messageRead', onRead);
         socket.on('typing', onTyping);
         socket.on('stopTyping', onStop);
+        socket.on('presence', onPresence);
 
         return () => {
             socket.off('receiveMessage', onReceive);
             socket.off('messageRead', onRead);
             socket.off('typing', onTyping);
             socket.off('stopTyping', onStop);
-
+            socket.off('presence', onPresence);
         };
     }, [withUser]);
 
@@ -158,5 +168,18 @@ export function useChat(withUser?: string) {
         console.log("📂 [useChat] Local chat history cleared");
     }, [withUser]);
 
-    return { messages, listRef, send, sendTyping, typingUsers, remove, clearAll, readSet };
+    useEffect(() => {
+        (async () => {
+            try {
+                const res = await axios.get<string[]>(USERS_API, {
+                    headers: { Authorization: `Bearer ${authStore.token}` }
+                });
+                setAllUsers(res.data);
+            } catch (e) {
+                console.warn("⚠️ [useChat] couldn’t load all users", e)
+            }
+        })();
+    }, []);
+
+    return { messages, listRef, send, sendTyping, typingUsers, remove, clearAll, readSet, allUsers, onlineUsers };
 }

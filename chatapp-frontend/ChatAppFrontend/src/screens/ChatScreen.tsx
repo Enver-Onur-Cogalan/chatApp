@@ -31,19 +31,9 @@ export default function ChatScreen() {
 
     const [input, setInput] = useState('');
     const [selectedUser, setSelectedUser] = useState<string | undefined>(undefined);
-    const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
     const [modalVisible, setModalVisible] = useState(false);
 
-    const { messages, listRef, send, remove, clearAll, readSet, typingUsers, sendTyping } = useChat(selectedUser);
-
-    useEffect(() => {
-        socket.on('presence', (users: string[]) => {
-            setOnlineUsers(users);
-        });
-        return () => {
-            socket.off('presence');
-        };
-    }, []);
+    const { messages, listRef, send, remove, clearAll, readSet, typingUsers, sendTyping, allUsers, onlineUsers } = useChat(selectedUser);
 
     useEffect(() => {
         if (selectedUser) {
@@ -52,6 +42,9 @@ export default function ChatScreen() {
     }, [selectedUser]);
 
     const handleLogout = async () => {
+        socket.emit('logout', authStore.username);
+        socket.disconnect();
+
         await authStore.logout();
         navigation.dispatch(
             CommonActions.reset({
@@ -74,7 +67,8 @@ export default function ChatScreen() {
         <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['bottom', 'top']}>
             <UserListModal
                 visible={modalVisible}
-                users={onlineUsers}
+                users={allUsers}
+                onlineUsers={onlineUsers}
                 onClose={() => setModalVisible(false)}
                 onSelect={user => setSelectedUser(user)}
             />

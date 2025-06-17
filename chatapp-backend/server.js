@@ -8,6 +8,7 @@ const { Server } = require('socket.io');
 const authRoutes = require('./routes/authRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const messageRouters = require('./routes/messageRoutes');
+const userRoutes = require('./routes/userRoutes');
 const { handleSocketConnection } = require('./sockets/socketManager');
 
 dotenv.config();
@@ -45,6 +46,7 @@ mongoose.connect(process.env.MONGO_URI, {
         app.use('/api/messages', messageRouters);
         app.use('/api/auth', authRoutes);
         app.use('/api/chat', chatRoutes);
+        app.use('/api/users', userRoutes);
 
         // Socket.IO connection
         io.on('connection', (socket) => {

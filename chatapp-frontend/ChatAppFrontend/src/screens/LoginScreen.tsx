@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import authStore from '../stores/authStore';
+import socket from '../utils/socket';
 
 type RootStackParamList = {
     Login: undefined;
@@ -25,7 +26,10 @@ const LoginScreen = observer(() => {
 
     useEffect(() => {
         if (authStore.isLoggedIn) {
-            navigation.replace('Chat');
+            socket.connect();
+            socket.emit('register', authStore.username);
+
+            navigation.reset({ index: 0, routes: [{ name: 'Chat' }] });
         }
     }, [authStore.isLoggedIn]);
 

@@ -29,6 +29,15 @@ const handleSocketConnection = (io, socket) => {
         broadcastPresence();
     });
 
+    // Logout
+    socket.on('logout', (username) => {
+        if (users.has(username)) {
+            users.delete(username);
+            console.log(`🔴 [logout] ${username} removed by logout event`);
+            broadcastPresence();
+        }
+    });
+
     // When the user starts typing
     socket.on('typing', ({ receiver, sender }) => {
         const room = receiver === 'all'

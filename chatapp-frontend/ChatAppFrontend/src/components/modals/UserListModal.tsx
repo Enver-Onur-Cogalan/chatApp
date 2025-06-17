@@ -6,6 +6,7 @@ import authStore from "../../stores/authStore";
 interface Props {
     visible: boolean;
     users: string[];
+    onlineUsers: string[];
     onClose: () => void;
     onSelect: (user?: string) => void;
 }
@@ -13,6 +14,7 @@ interface Props {
 export const UserListModal: React.FC<Props> = ({
     visible,
     users,
+    onlineUsers,
     onClose,
     onSelect,
 }) => {
@@ -37,21 +39,30 @@ export const UserListModal: React.FC<Props> = ({
                     <FlatList
                         data={list}
                         keyExtractor={item => item}
-                        renderItem={({ item }) => (
-                            <Pressable
-                                style={styles.card}
-                                onPress={() => {
-                                    onSelect(item);
-                                    onClose();
-                                }}
-                            >
-                                <Text style={styles.name}>{item}</Text>
-                                <View style={styles.statusRow}>
-                                    <View style={styles.onlineDot} />
-                                    <Text style={styles.statusText}>Online</Text>
-                                </View>
-                            </Pressable>
-                        )}
+                        renderItem={({ item }) => {
+                            const isOnline = onlineUsers.includes(item);
+                            return (
+                                <Pressable
+                                    style={styles.card}
+                                    onPress={() => {
+                                        onSelect(item);
+                                        onClose();
+                                    }}
+                                >
+                                    <Text style={styles.name}>{item}</Text>
+                                    <View style={styles.statusRow}>
+                                        <View style={[
+                                            styles.dot,
+                                            { backgroundColor: isOnline ? 'green' : 'red' },
+                                        ]}
+                                        />
+                                        <Text style={styles.statusText}>
+                                            {isOnline ? 'Online' : 'Offline'}
+                                        </Text>
+                                    </View>
+                                </Pressable>
+                            );
+                        }}
                         ListEmptyComponent={
                             <Text style={styles.empty}>There is no one else right now.</Text>
                         }
@@ -101,11 +112,10 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
     },
-    onlineDot: {
+    dot: {
         width: 8,
         height: 8,
         borderRadius: 10,
-        backgroundColor: 'green',
         marginRight: 6,
     },
     statusText: {
