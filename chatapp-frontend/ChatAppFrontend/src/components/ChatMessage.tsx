@@ -1,16 +1,30 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import Animated, { interpolate, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 import { ChatMsg } from '../hooks/useChat';
 import MessageBubble from './MessageBubble';
 import authStore from '../stores/authStore';
 import socket from '../utils/socket';
+import theme from '../theme/theme';
 
 interface Props { msg: ChatMsg; onDelete(id: string): void; readSet: React.MutableRefObject<Set<string>>; }
 
 const ChatMessage: React.FC<Props> = ({ msg, onDelete, readSet }) => {
     const [showDelete, setShowDelete] = useState(false);
+    const scale = useSharedValue(0);
+
+    const animatedStyle = useAnimatedStyle(() => ({
+        transform: [
+            { scale: scale.value },
+            { rotate: `${interpolate(scale.value, [0, 1], [-10, 0])}deg` }
+        ]
+    }));
+
+    useEffect(() => {
+        scale.value = withSpring(1, { damping: 12, stiffness: 100 });
+    }, []);
 
     useEffect(() => {
         if (
@@ -29,13 +43,13 @@ const ChatMessage: React.FC<Props> = ({ msg, onDelete, readSet }) => {
 
 
     return (
-        <View style={styles.wrapper}>
+        <Animated.View style={[styles.wrapper, animatedStyle]}>
             {showDelete && (
                 <TouchableOpacity
-                    style={styles.deleteBar}
+                    style={styles.deleteClip}
                     onPress={() => onDelete(msg.id)}
                 >
-                    <Icon name='trash-outline' size={20} color='#fff' />
+                    <Icon name='attach-outline' size={24} color={theme.colors.accent} />
                 </TouchableOpacity>
             )}
             <TouchableOpacity
@@ -55,7 +69,7 @@ const ChatMessage: React.FC<Props> = ({ msg, onDelete, readSet }) => {
                     status={msg.status}
                 />
             </TouchableOpacity>
-        </View>
+        </Animated.View>
     );
 };
 
@@ -63,15 +77,13 @@ export default ChatMessage;
 
 const styles = StyleSheet.create({
     wrapper: {
-        marginVertical: 4,
+        marginVertical: 6,
     },
-    deleteBar: {
+    deleteClip: {
         position: 'absolute',
-        top: -24,
-        right: 0,
-        backgroundColor: '#f44',
-        padding: 6,
-        borderRadius: 4,
+        top: -6,
+        right: 4,
+        padding: 4,
         zIndex: 1,
     },
 });

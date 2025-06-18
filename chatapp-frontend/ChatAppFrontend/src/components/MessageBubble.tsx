@@ -1,6 +1,8 @@
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
+
+import theme from "../theme/theme";
 
 interface MessageBubbleProps {
     message: string;
@@ -18,12 +20,16 @@ const formatTime = (iso: string) => {
 };
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwnMessage, sender, timestamp, status = 'sent' }) => {
+    const bgColor = isOwnMessage
+        ? theme.colors.postItYellow
+        : theme.colors.postItGreen;
 
     return (
         <View
             style={[
                 styles.bubble,
                 isOwnMessage ? styles.ownBubble : styles.otherBubble,
+                { backgroundColor: bgColor },
             ]}
         >
             {!isOwnMessage && <Text style={styles.sender}>{sender}</Text>}
@@ -33,7 +39,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwnMessage, se
                 <Icon
                     name={status === 'read' ? 'checkmark-done' : 'checkmark'}
                     size={12}
-                    color={status === 'read' ? '#4FC3F7' : '#888'}
+                    color={status === 'read' ? theme.colors.accent : theme.colors.lines}
                     style={styles.tick}
                 />
             )}
@@ -45,36 +51,47 @@ const styles = StyleSheet.create({
     bubble: {
         maxWidth: '80%',
         marginVertical: 4,
-        padding: 10,
-        borderRadius: 10,
-    },
-    sender: {
-        fontSize: 12,
-        color: '#555',
-        fontWeight: 'bold',
-        marginBottom: 2,
-    },
-    ownBubble: {
-        backgroundColor: '#DCF8C6',
-        alignSelf: 'flex-end',
-    },
-    otherBubble: {
-        backgroundColor: '#eee',
+        padding: 12,
+        borderRadius: 6,
+        ...Platform.select({
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.2,
+                shadowRadius: 2,
+            },
+            android: { elevation: 2 },
+        }),
         alignSelf: 'flex-start',
     },
+    sender: {
+        fontFamily: theme.typography.subHeader.fontFamily,
+        fontSize: theme.typography.subHeader.fontSize,
+        color: theme.colors.textPrimary,
+        marginBottom: 4,
+    },
     message: {
-        fontSize: 16,
+        fontFamily: theme.typography.body.fontFamily,
+        fontSize: theme.typography.body.fontSize,
+        color: theme.colors.textPrimary,
+        marginBottom: 6,
     },
     timeText: {
-        fontSize: 10,
-        color: '#444',
+        fontFamily: theme.typography.timestamp.fontFamily,
+        fontSize: theme.typography.timestamp.fontSize,
+        color: theme.colors.textPrimary + '99',
         alignSelf: 'flex-end',
-        marginTop: 4,
     },
     tick: {
         marginLeft: 4,
         alignSelf: 'flex-end',
-    }
+    },
+    ownBubble: {
+        alignSelf: 'flex-end',
+    },
+    otherBubble: {
+        alignSelf: 'flex-start',
+    },
 });
 
 export default MessageBubble;

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
     FlatList,
+    ImageBackground,
     KeyboardAvoidingView,
     Platform,
     StyleSheet,
@@ -19,6 +20,7 @@ import { useChat } from '../hooks/useChat';
 import ChatMessage from '../components/ChatMessage';
 import socket from '../utils/socket';
 import { UserListModal } from '../components/modals/UserListModal';
+import theme from '../theme/theme';
 
 type RootStackParamList = {
     Login: undefined;
@@ -63,161 +65,127 @@ export default function ChatScreen() {
 
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }} edges={['bottom', 'top']}>
-            <UserListModal
-                visible={modalVisible}
-                presence={presence}
-                onClose={() => setModalVisible(false)}
-                onSelect={user => setSelectedUser(user)}
-            />
-            {modalVisible && console.log('💬 [ChatScreen] opening UserListModal with presence:', presence)}
-
-            <KeyboardAvoidingView
-                style={styles.container}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                keyboardVerticalOffset={90}
+        <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={['bottom', 'top']}>
+            <ImageBackground
+                source={require('../assets/lined-paper.png')}
+                style={styles.background}
+                imageStyle={styles.paperImage}
             >
-                <View style={styles.header}>
-                    <Text style={styles.headerTitle}>ChatApp</Text>
-                    <View style={styles.roomsContainer}>
-                        <TouchableOpacity
-                            onPress={() => setSelectedUser(undefined)}
-                            style={[
-                                styles.roomButton,
-                                !selectedUser && styles.roomButtonActive
-                            ]}
-                        >
-                            <Text>Global</Text>
-                        </TouchableOpacity>
 
-                        <TouchableOpacity
-                            onPress={() => setModalVisible(true)}
-                            style={styles.userListButton}
-                        >
-                            <Icon name='people' size={20} color='#333' />
-                        </TouchableOpacity>
-                    </View>
-
-                    <TouchableOpacity onPress={clearAll} style={{ marginRight: 50 }}>
-                        <Icon name='trash-bin-outline' size={24} color='#333' />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity onPress={handleLogout}>
-                        <Icon name='log-out-outline' size={24} color='#333' />
-                    </TouchableOpacity>
-                </View>
-
-                <FlatList
-                    ref={listRef}
-                    data={messages}
-                    keyExtractor={(item) => `${item.id}-${item.status}`}
-                    extraData={messages}
-                    renderItem={({ item }) => (
-                        <ChatMessage msg={item} onDelete={remove} readSet={readSet} />
-                    )}
-                    contentContainerStyle={styles.chatContainer}
-                    onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
+                <UserListModal
+                    visible={modalVisible}
+                    presence={presence}
+                    onClose={() => setModalVisible(false)}
+                    onSelect={user => setSelectedUser(user)}
                 />
-                {typingUsers.length > 0 && (
-                    <View style={styles.typingContainer}>
-                        <Text style={styles.typingText}>
-                            {typingUsers.join(', ')} typing...
-                        </Text>
-                    </View>
-                )}
 
-                <View style={styles.inputContainer}>
-                    <TextInput
-                        style={styles.input}
-                        placeholder='Write your message...'
-                        value={input}
-                        onChangeText={text => {
-                            setInput(text);
-                            sendTyping(true);
-                        }}
-                        onBlur={() => sendTyping(false)}
-                        onEndEditing={() => sendTyping(false)}
-                        onSubmitEditing={() => sendTyping(false)}
+                <KeyboardAvoidingView
+                    style={styles.container}
+                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                    keyboardVerticalOffset={90}
+                >
+                    <View style={styles.header}>
+                        <Text style={styles.headerTitle}>ChatApp</Text>
+                        <View style={styles.roomsContainer}>
+                            <TouchableOpacity
+                                onPress={() => setSelectedUser(undefined)}
+                                style={[
+                                    styles.roomButton,
+                                    !selectedUser && styles.roomButtonActive,
+                                ]}
+                            >
+                                <Text style={styles.roomButtonText}>Global</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                onPress={() => setModalVisible(true)}
+                                style={styles.userListButton}
+                            >
+                                <Icon name='document-text-outline' size={24} color={theme.colors.textPrimary} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <TouchableOpacity onPress={clearAll} style={{ marginRight: 50 }}>
+                            <Icon name='trash-bin-outline' size={24} color={theme.colors.textPrimary} />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity onPress={handleLogout}>
+                            <Icon name='log-out-outline' size={24} color={theme.colors.textPrimary} />
+                        </TouchableOpacity>
+                    </View>
+
+                    <FlatList
+                        ref={listRef}
+                        data={messages}
+                        keyExtractor={(item) => `${item.id}-${item.status}`}
+                        extraData={messages}
+                        renderItem={({ item }) => (
+                            <ChatMessage msg={item} onDelete={remove} readSet={readSet} />
+                        )}
+                        contentContainerStyle={styles.chatContainer}
+                        onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
                     />
-                    <TouchableOpacity onPress={() => { handleSend(); sendTyping(false); }} style={styles.sendButton}>
-                        <Text style={styles.sendText}>Send</Text>
-                    </TouchableOpacity>
-                </View>
-            </KeyboardAvoidingView>
+                    {typingUsers.length > 0 && (
+                        <View style={styles.typingContainer}>
+                            <Text style={styles.typingText}>
+                                {typingUsers.join(', ')} typing...
+                            </Text>
+                        </View>
+                    )}
+
+                    <View style={styles.inputContainer}>
+                        <TextInput
+                            style={styles.input}
+                            placeholder='Write your message...'
+                            placeholderTextColor={theme.colors.textPrimary + '99'}
+                            value={input}
+                            onChangeText={text => {
+                                setInput(text);
+                                sendTyping(true);
+                            }}
+                            onBlur={() => sendTyping(false)}
+                            onEndEditing={() => sendTyping(false)}
+                            onSubmitEditing={() => sendTyping(false)}
+                        />
+                        <TouchableOpacity onPress={() => { handleSend(); sendTyping(false); }} style={styles.sendButton}>
+                            <Icon name='paper-plane' size={20} color='#fff' />
+                        </TouchableOpacity>
+                    </View>
+                </KeyboardAvoidingView>
+            </ImageBackground>
         </SafeAreaView>
     );
 }
 
 
 const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: 'transparent',
+    },
+    background: {
+        flex: 1,
+    },
+    paperImage: {
+        resizeMode: 'repeat',
+    },
     header: {
         flexDirection: 'row',
         padding: 12,
         borderBottomWidth: 1,
-        borderColor: '#ddd',
+        borderColor: theme.colors.lines,
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#fff',
+        backgroundColor: 'transparent',
     },
     headerTitle: {
-        fontSize: 20,
+        fontSize: theme.typography.header.fontSize,
+        fontFamily: theme.typography.header.fontFamily,
+        color: theme.colors.textPrimary,
         fontWeight: 'bold',
-    },
-    container: {
-        flex: 1,
-        backgroundColor: '#fff',
-    },
-    input: {
-        flex: 1,
-        borderColor: 'green',
-        borderWidth: 1,
-        borderRadius: 20,
-        paddingHorizontal: 15,
-        paddingVertical: Platform.OS === 'ios' ? 10 : 15,
-        backgroundColor: '#f1f1f1',
     },
     chatContainer: {
         padding: 10,
-    },
-    inputContainer: {
-        flexDirection: 'row',
-        padding: 8,
-        borderTopWidth: 1,
-        borderColor: '#ccc',
-    },
-    sendButton: {
-        marginLeft: 10,
-        backgroundColor: '#4CAF50',
-        borderRadius: 20,
-        paddingHorizontal: 15,
-        justifyContent: 'center',
-    },
-    sendText: {
-        color: '#fff',
-        fontWeight: 'bold',
-    },
-    roomButton: {
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        marginHorizontal: 4,
-        borderRadius: 4,
-        borderWidth: 1,
-        borderColor: '#888',
-    },
-    roomButtonActive: {
-        backgroundColor: '#4CAF50',
-        borderColor: '#4CAF50',
-    },
-    roomsContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        marginTop: 8,
-        marginBottom: 4,
-    },
-    userListButton: {
-        alignItems: 'center',
-        marginLeft: 4,
     },
     typingContainer: {
         paddingHorizontal: 12,
@@ -225,6 +193,65 @@ const styles = StyleSheet.create({
     },
     typingText: {
         fontStyle: 'italic',
-        color: 'black',
+        color: theme.colors.textPrimary,
+        fontFamily: theme.typography.timestamp.fontFamily,
+        fontSize: theme.typography.timestamp.fontSize,
+    },
+    inputContainer: {
+        flexDirection: 'row',
+        padding: 8,
+        borderTopWidth: 1,
+        borderColor: theme.colors.lines,
+        backgroundColor: 'transparent',
+    },
+    input: {
+        flex: 1,
+        borderColor: theme.colors.accent,
+        borderWidth: 1,
+        borderRadius: 20,
+        paddingHorizontal: 15,
+        paddingVertical: Platform.OS === 'ios' ? 10 : 15,
+        backgroundColor: theme.colors.edgeShadow,
+        color: theme.colors.textPrimary,
+        fontFamily: theme.typography.body.fontFamily,
+        fontSize: theme.typography.body.fontSize,
+    },
+    sendButton: {
+        marginLeft: 10,
+        backgroundColor: theme.colors.accent,
+        borderRadius: 50,
+        paddingHorizontal: 15,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    sendText: {
+        color: '#fff',
+        fontFamily: theme.typography.button.fontFamily,
+        fontSize: theme.typography.button.fontSize,
+    },
+    roomsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    roomButton: {
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        marginHorizontal: 4,
+        borderRadius: 4,
+        borderWidth: 1,
+        borderColor: theme.colors.lines,
+    },
+    roomButtonActive: {
+        backgroundColor: theme.colors.accent,
+        borderColor: theme.colors.accent,
+    },
+    roomButtonText: {
+        fontFamily: theme.typography.button.fontFamily,
+        fontSize: theme.typography.button.fontSize,
+        color: theme.colors.textPrimary,
+    },
+    userListButton: {
+        alignItems: 'center',
+        marginLeft: 4,
     },
 });

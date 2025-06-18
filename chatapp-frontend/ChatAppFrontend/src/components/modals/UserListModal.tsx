@@ -1,8 +1,9 @@
 import React from "react";
-import { Modal, Pressable, StyleSheet, View, Text, FlatList } from "react-native";
+import { Modal, Pressable, StyleSheet, View, Text, FlatList, ImageBackground, Platform } from "react-native";
 import Icon from 'react-native-vector-icons/Ionicons';
 import authStore from "../../stores/authStore";
 import { PresenceInfo } from "../../hooks/useChat";
+import theme from "../../theme/theme";
 
 interface Props {
     visible: boolean;
@@ -33,11 +34,16 @@ export const UserListModal: React.FC<Props> = ({
             onRequestClose={onClose}
         >
             <View style={styles.overlay}>
-                <View style={styles.container}>
+                <ImageBackground
+                    source={require('../../assets/lined-paper.png')}
+                    style={styles.container}
+                    imageStyle={styles.paperImage}
+                >
                     <View style={styles.header}>
+                        <Icon name="book-outline" size={24} color={theme.colors.textPrimary} />
                         <Text style={styles.title}>Users</Text>
-                        <Pressable onPress={onClose}>
-                            <Icon name="close" size={24} />
+                        <Pressable onPress={onClose} style={styles.closeButton}>
+                            <Icon name="close" size={24} color={theme.colors.textPrimary} />
                         </Pressable>
                     </View>
 
@@ -48,12 +54,13 @@ export const UserListModal: React.FC<Props> = ({
                             const { username, online, lastSeen } = item;
                             return (
                                 <Pressable
-                                    style={styles.card}
+                                    style={[styles.userNote, online ? {} : styles.offlineNote]}
                                     onPress={() => {
                                         onSelect(username);
                                         onClose();
                                     }}
                                 >
+                                    <Icon name="pin-outline" size={20} color={theme.colors.accent} style={styles.pin} />
                                     <Text style={styles.name}>{username}</Text>
                                     <View style={styles.statusRow}>
                                         <View style={[
@@ -75,7 +82,7 @@ export const UserListModal: React.FC<Props> = ({
                             <Text style={styles.empty}>There is no one else right now.</Text>
                         }
                     />
-                </View>
+                </ImageBackground>
             </View>
         </Modal>
     );
@@ -89,32 +96,55 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     container: {
-        width: '80%',
-        maxHeight: '70%',
-        backgroundColor: '#fff',
+        width: '85%',
+        maxHeight: '75%',
+        backgroundColor: theme.colors.background,
         borderRadius: 8,
-        padding: 12,
+        overflow: 'hidden',
+    },
+    paperImage: {
+        resizeMode: 'repeat',
+        opacity: 0.15,
     },
     header: {
         flexDirection: 'row',
+        padding: 8,
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 8,
+        borderBottomWidth: 1,
+        borderColor: theme.colors.lines,
+        backgroundColor: theme.colors.background,
     },
     title: {
-        fontSize: 18,
-        fontWeight: 'bold',
+        fontFamily: theme.typography.header.fontFamily,
+        fontSize: theme.typography.header.fontSize,
+        color: theme.colors.textPrimary,
     },
-    card: {
-        paddingVertical: 10,
-        borderBottomWidth: 1,
-        borderColor: '#888',
+    userNote: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: theme.colors.postItBlue,
+        padding: 10,
+        marginVertical: 6,
+        marginHorizontal: 8,
+        borderRadius: 6,
+        ...Platform.select({
+            ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 2 },
+            android: { elevation: 2 },
+        }),
     },
-    name: {
-        fontSize: 16,
+    offlineNote: {
+        opacity: 0.7,
+    },
+    pin: {
+        transform: [{ rotate: '-20deg' }],
+    },
+    userName: {
+        flexShrink: 1,
+        fontFamily: theme.typography.body.fontFamily,
+        fontSize: theme.typography.body.fontSize,
+        color: theme.colors.textPrimary,
     },
     statusRow: {
         flexDirection: 'row',
@@ -127,17 +157,20 @@ const styles = StyleSheet.create({
         marginRight: 6,
     },
     onlineDot: {
-        backgroundColor: 'green',
+        backgroundColor: theme.colors.online,
     },
     offlineDot: {
-        backgroundColor: 'red',
+        backgroundColor: theme.colors.offline,
     },
     statusText: {
-        fontSize: 14,
+        fontFamily: theme.typography.timestamp.fontFamily,
+        fontSize: theme.typography.timestamp.fontSize,
+        color: theme.colors.textPrimary,
     },
     empty: {
         textAlign: 'center',
         marginTop: 20,
-        color: '#888',
+        color: theme.colors.textPrimary,
+        fontFamily: theme.typography.body.fontFamily,
     },
 });
