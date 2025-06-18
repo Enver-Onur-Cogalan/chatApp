@@ -59,51 +59,7 @@ ChatApp is a real-time one-to-one & group chat application built with React Nati
 
 ## 🧩 Architecture
 
-\`\`\`
-chatapp-backend/
-├─ controllers/
-│  └─ authController.js
-├─ middlewares/
-│  └─ authMiddleware.js
-├─ models/
-│  ├─ Message.js
-│  └─ User.js
-├─ routes/
-│  ├─ authRoutes.js
-│  ├─ chatRoutes.js
-│  ├─ messageRoutes.js
-│  └─ userRoutes.js
-├─ sockets/
-│  └─ socketManager.js
-└─ server.js
-
-chatapp-frontend/
-├─ src/
-│  ├─ assets/
-│  │  └─ lined-paper.png
-│  ├─ components/
-│  │  ├─ modals/
-│  │  │  └─ UserListModal.tsx
-│  │  ├─ ChatMessage.tsx
-│  │  └─ MessageBubble.tsx
-│  ├─ hooks/
-│  │  └─ useChat.tsx
-│  ├─ navigation/
-│  │  └─ AppNavigator.tsx
-│  ├─ screens/
-│  │  ├─ ChatScreen.tsx
-│  │  ├─ LoginScreen.tsx
-│  │  └─ RegisterScreen.tsx
-│  ├─ services/
-│  │  └─ chatStorageService.tsx
-│  ├─ stores/
-│  │  └─ authStore.tsx
-│  ├─ theme/
-│  │  └─ theme.ts
-│  └─ utils/
-│     └─ socket.ts
-└─ App.tsx
-\`\`\`
+<pre markdown> ## 🧩 Architecture ``` chatapp-backend/ ├─ controllers/ │ └─ authController.js ├─ middlewares/ │ └─ authMiddleware.js ├─ models/ │ ├─ Message.js │ └─ User.js ├─ routes/ │ ├─ authRoutes.js │ ├─ chatRoutes.js │ ├─ messageRoutes.js │ └─ userRoutes.js ├─ sockets/ │ └─ socketManager.js └─ server.js chatapp-frontend/ ├─ src/ │ ├─ assets/ │ │ └─ lined-paper.png │ ├─ components/ │ │ ├─ modals/ │ │ │ └─ UserListModal.tsx │ │ ├─ ChatMessage.tsx │ │ └─ MessageBubble.tsx │ ├─ hooks/ │ │ └─ useChat.tsx │ ├─ navigation/ │ │ └─ AppNavigator.tsx │ ├─ screens/ │ │ ├─ ChatScreen.tsx │ │ ├─ LoginScreen.tsx │ │ └─ RegisterScreen.tsx │ ├─ services/ │ │ └─ chatStorageService.tsx │ ├─ stores/ │ │ └─ authStore.tsx │ ├─ theme/ │ │ └─ theme.ts │ └─ utils/ │ └─ socket.ts └─ App.tsx ``` </pre>
 
 ## 🤝 Contributing
 1. Fork the repository
