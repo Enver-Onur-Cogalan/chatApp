@@ -61,14 +61,19 @@
 		<string>Octicons.ttf</string>
 		<string>SimpleLineIcons.ttf</string>
 		<string>Zocial.ttf</string>
+		<string>Inter-Light.ttf</string>
+		<string>Inter-Medium.ttf</string>
+		<string>Inter-Regular.ttf</string>
+		<string>Inter-SemiBold.ttf</string>
+		<string>PatrickHand-Regular.ttf</string>
+		<string>ReenieBeanie-Regular.ttf</string>
 	</array>
 	<key>NSAppTransportSecurity</key>
-		<dict>
-  			<key>NSAllowsArbitraryLoads</key>
-  			<true/>
-
-			<key>NSAllowsLocalNetworking</key>
-  			<true/>
-		</dict>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 </dict>
 </plist>
