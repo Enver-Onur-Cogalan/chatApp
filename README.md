@@ -18,7 +18,7 @@ ChatApp is a real-time one-to-one & group chat application built with React Nati
 - **Message management**: Delete single messages or clear entire chat (both client & server)
 
 ## 🚀 Tech Stack
-- **Frontend**: React Native CLI, TypeScript, Zustand/MobX (state), React Native Reanimated
+- **Frontend**: React Native CLI, TypeScript, MobX (state), React Native Reanimated
 - **Backend**: Node.js, Express, MongoDB, JWT, Socket.IO
 - **Storage**: AsyncStorage for offline caching
 - **UI**: Ionicons, react-native-safe-area-context, ImageBackground for textures, reanimated for animations
